@@ -5,7 +5,7 @@ set -euo pipefail
 KUBE_SYSTEM_NAMESPACE="kube-system"
 
 CILIUM_NAMESPACE="${KUBE_SYSTEM_NAMESPACE}"
-CILIUM_VERSION="v1.11.0-rc3"
+CILIUM_VERSION="${CILIUM_VERSION:-v1.11.0}"
 CLUSTER_NAME_PREFIX="kind-cilium-mesh-"
 CLUSTER_1_NAME="${CLUSTER_NAME_PREFIX}1"
 CLUSTER_1_CONTEXT="kind-${CLUSTER_1_NAME}"
@@ -31,8 +31,8 @@ kubectl config use "${CLUSTER_2_CONTEXT}"
 cilium install --cluster-name "${CLUSTER_2_NAME}" --cluster-id "${CLUSTER_2_NAME/${CLUSTER_NAME_PREFIX}/}" --ipam kubernetes --version "${CILIUM_VERSION}" --inherit-ca "${CLUSTER_1_CONTEXT}"
 
 info "Creating the cluster mesh..."
-cilium clustermesh enable --context "${CLUSTER_1_CONTEXT}" --service-type NodePort
-cilium clustermesh enable --context "${CLUSTER_2_CONTEXT}" --service-type NodePort
+cilium clustermesh enable --context "${CLUSTER_1_CONTEXT}" --service-type NodePort --apiserver-version "${CILIUM_VERSION}"
+cilium clustermesh enable --context "${CLUSTER_2_CONTEXT}" --service-type NodePort --apiserver-version "${CILIUM_VERSION}"
 cilium clustermesh status --context "${CLUSTER_1_CONTEXT}" --wait
 cilium clustermesh status --context "${CLUSTER_2_CONTEXT}" --wait
 cilium clustermesh connect --context "${CLUSTER_1_CONTEXT}" --destination-context "${CLUSTER_2_CONTEXT}"
@@ -41,8 +41,8 @@ cilium clustermesh status --context "${CLUSTER_2_CONTEXT}" --wait
 
 info "Deploying the test application..."
 kubectl config use "${CLUSTER_1_CONTEXT}"
-kubectl apply -f "${ROOT}/common/rebel-base.yaml" -f "https://raw.githubusercontent.com/cilium/cilium/${CILIUM_VERSION}/examples/kubernetes/clustermesh/global-service-example/cluster1.yaml"
+kubectl apply -f "${ROOT}/common/rebel-base.yaml" -f "https://raw.githubusercontent.com/cilium/cilium/master/examples/kubernetes/clustermesh/global-service-example/cluster1.yaml"
 kubectl config use "${CLUSTER_2_CONTEXT}"
-kubectl apply -f "${ROOT}/common/rebel-base.yaml" -f "https://raw.githubusercontent.com/cilium/cilium/${CILIUM_VERSION}/examples/kubernetes/clustermesh/global-service-example/cluster2.yaml"
+kubectl apply -f "${ROOT}/common/rebel-base.yaml" -f "https://raw.githubusercontent.com/cilium/cilium/master/examples/kubernetes/clustermesh/global-service-example/cluster2.yaml"
 
 popd > /dev/null
